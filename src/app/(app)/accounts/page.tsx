@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 
 interface Holding {
   ticker: string;
@@ -17,6 +17,25 @@ interface AccountForm {
   holdings: Holding[];
 }
 
+interface BrokerageHolding {
+  accountId: string;
+  accountName: string;
+  ticker: string;
+  name: string;
+  units: number;
+  price: number;
+  averagePrice: number;
+  openPnl: number;
+}
+
+interface BrokerageAccount {
+  id: string;
+  name: string;
+  number: string;
+  institutionName: string;
+  type: string;
+}
+
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<{ id: string; accountType: string; name: string; holdings: Holding[] }[]>([]);
   const [showForm, setShowForm] = useState(false);
@@ -26,6 +45,71 @@ export default function AccountsPage() {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Brokerage connection state
+  const [snaptradeConfigured, setSnaptradeConfigured] = useState(false);
+  const [connecting, setConnecting] = useState(false);
+  const [brokerageAccounts, setBrokerageAccounts] = useState<BrokerageAccount[]>([]);
+  const [brokerageHoldings, setBrokerageHoldings] = useState<BrokerageHolding[]>([]);
+  const [loadingHoldings, setLoadingHoldings] = useState(false);
+
+  // Check if SnapTrade is configured
+  useEffect(() => {
+    fetch('/api/v1/brokerage/connect')
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) setSnaptradeConfigured(data.configured);
+      })
+      .catch(() => {});
+  }, []);
+
+  // Load brokerage holdings if we have a stored secret
+  const loadBrokerageHoldings = useCallback(async () => {
+    const userSecret = localStorage.getItem('snaptrade_user_secret');
+    if (!userSecret) return;
+
+    setLoadingHoldings(true);
+    try {
+      const res = await fetch(`/api/v1/brokerage/holdings?userSecret=${encodeURIComponent(userSecret)}`);
+      const data = await res.json();
+      if (data.success) {
+        setBrokerageAccounts(data.data.accounts);
+        setBrokerageHoldings(data.data.holdings);
+      }
+    } catch {
+      // Silent fail - user may not have connected yet
+    } finally {
+      setLoadingHoldings(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    loadBrokerageHoldings();
+  }, [loadBrokerageHoldings]);
+
+  // Connect brokerage
+  const handleConnectBrokerage = async () => {
+    setConnecting(true);
+    setError('');
+    try {
+      const res = await fetch('/api/v1/brokerage/connect', { method: 'POST' });
+      const data = await res.json();
+
+      if (data.success && data.data.redirectUrl) {
+        // Store the user secret for future API calls
+        localStorage.setItem('snaptrade_user_secret', data.data.userSecret);
+        // Open SnapTrade connection portal in new window
+        window.open(data.data.redirectUrl, '_blank', 'width=500,height=700');
+        setSuccess('Connection portal opened. After linking your account, click "Refresh Holdings" to see your data.');
+      } else {
+        setError(data.error || 'Failed to create connection');
+      }
+    } catch {
+      setError('Failed to connect to brokerage service.');
+    } finally {
+      setConnecting(false);
+    }
+  };
 
   const [form, setForm] = useState<AccountForm>({
     accountType: '401k',
@@ -171,6 +255,15 @@ export default function AccountsPage() {
           <p className="text-gray-400 mt-1">Manage your investment accounts. All data is AES-256 encrypted.</p>
         </div>
         <div className="flex items-center gap-2">
+          {snaptradeConfigured && (
+            <button
+              onClick={handleConnectBrokerage}
+              disabled={connecting}
+              className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+            >
+              {connecting ? 'Connecting...' : 'Connect Brokerage'}
+            </button>
+          )}
           <button
             onClick={() => { setShowForm(true); setShowImport(false); }}
             className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
@@ -196,6 +289,111 @@ export default function AccountsPage() {
           <p className="text-xs text-green-400/70">All account data is encrypted with AES-256-GCM before storage. Your brokerage credentials are never stored.</p>
         </div>
       </div>
+
+      {/* Connect Brokerage Section */}
+      {snaptradeConfigured && (
+        <div className="bg-[#111827] border border-[#1e293b] rounded-xl p-6 fade-in">
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-blue-500/15 rounded-lg flex items-center justify-center">
+                <svg className="w-5 h-5 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+                </svg>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-white">Connect Your Brokerage</h3>
+                <p className="text-xs text-gray-400">Link Fidelity, Robinhood, or other brokerages to auto-import holdings</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-2">
+              {brokerageAccounts.length > 0 && (
+                <button
+                  onClick={loadBrokerageHoldings}
+                  disabled={loadingHoldings}
+                  className="text-xs bg-[#1e293b] text-gray-300 px-3 py-1.5 rounded-lg hover:bg-[#334155] transition-colors disabled:opacity-50"
+                >
+                  {loadingHoldings ? 'Loading...' : 'Refresh Holdings'}
+                </button>
+              )}
+              <button
+                onClick={handleConnectBrokerage}
+                disabled={connecting}
+                className="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50"
+              >
+                {connecting ? 'Connecting...' : brokerageAccounts.length > 0 ? 'Add Another Account' : 'Connect Account'}
+              </button>
+            </div>
+          </div>
+
+          {/* Supported Brokerages */}
+          {brokerageAccounts.length === 0 && !loadingHoldings && (
+            <div className="flex items-center gap-4 mt-3 pt-3 border-t border-[#1e293b]">
+              <span className="text-xs text-gray-500">Supported:</span>
+              {['Fidelity', 'Robinhood', 'Schwab', 'TD Ameritrade', 'E*Trade', 'Interactive Brokers'].map((name) => (
+                <span key={name} className="text-xs text-gray-400 bg-[#1e293b] px-2 py-1 rounded">
+                  {name}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Loading state */}
+          {loadingHoldings && (
+            <div className="text-center py-6">
+              <div className="animate-pulse text-blue-400 text-sm font-medium">Loading your brokerage data...</div>
+            </div>
+          )}
+
+          {/* Connected Accounts */}
+          {brokerageAccounts.length > 0 && (
+            <div className="mt-4 space-y-4">
+              {brokerageAccounts.map((acct) => (
+                <div key={acct.id} className="bg-[#0d1117] border border-[#1e293b] rounded-lg p-4">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-8 h-8 bg-blue-500/10 rounded-full flex items-center justify-center">
+                        <span className="text-blue-400 text-xs font-bold">{acct.institutionName?.[0] || 'B'}</span>
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-semibold text-white">{acct.name || acct.institutionName}</h4>
+                        <span className="text-xs text-gray-500">{acct.institutionName} &middot; {acct.type} &middot; ****{acct.number?.slice(-4)}</span>
+                      </div>
+                    </div>
+                    <span className="text-xs text-green-400 bg-green-500/10 px-2 py-0.5 rounded">Connected</span>
+                  </div>
+
+                  {/* Holdings for this account */}
+                  {brokerageHoldings.filter(h => h.accountId === acct.id).length > 0 && (
+                    <div className="space-y-1">
+                      {brokerageHoldings
+                        .filter(h => h.accountId === acct.id)
+                        .map((h, i) => (
+                          <div key={i} className="flex items-center justify-between text-sm py-1.5 border-t border-[#1e293b]/50 first:border-t-0">
+                            <div className="flex items-center gap-2">
+                              <span className="text-white font-mono text-xs">{h.ticker}</span>
+                              <span className="text-gray-500 text-xs">{h.name}</span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <span className="text-gray-400 text-xs">{h.units} shares</span>
+                              <span className="text-white text-xs font-mono">
+                                ${(h.units * h.price).toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              </span>
+                              {h.openPnl !== 0 && (
+                                <span className={`text-xs font-mono ${h.openPnl >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                                  {h.openPnl >= 0 ? '+' : ''}{h.openPnl.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
 
       {error && (
         <div className="bg-red-500/10 border border-red-500/30 rounded-lg p-3 text-sm text-red-400">{error}</div>

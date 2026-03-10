@@ -26,7 +26,7 @@ let db: Database.Database | null = null;
 function getDb(): Database.Database {
   if (db) return db;
 
-  const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'brillontly.db');
+  const dbPath = process.env.DATABASE_PATH || path.join(process.cwd(), 'data', 'brilliontly.db');
   const dir = path.dirname(dbPath);
   const fs = require('fs');
   if (!fs.existsSync(dir)) {

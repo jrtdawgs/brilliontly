@@ -1,4 +1,4 @@
-# PRD-001: Brillontly - Investment Advisory Platform
+# PRD-001: Brilliontly - Investment Advisory Platform
 ## Master Product Requirements Document
 
 ### Version: 1.0
@@ -9,7 +9,7 @@
 
 ## 1. Vision
 
-Brillontly is a personal investment advisory platform that provides institutional-grade
+Brilliontly is a personal investment advisory platform that provides institutional-grade
 portfolio analytics to individual investors. It serves two purposes:
 1. **Personal Use** - Advanced portfolio tracking and analytics for the founder's accounts
 2. **SaaS Product** - Offer the same analytics engine as a service to paying clients
@@ -187,6 +187,6 @@ POST   /api/v1/alerts                 - Create alert
 
 ## 11. Legal Disclaimer
 
-Brillontly provides analytics and educational information only. It is NOT a registered
+Brilliontly provides analytics and educational information only. It is NOT a registered
 investment advisor. All metrics are for informational purposes. Users make their own
 investment decisions. Past performance does not guarantee future results.

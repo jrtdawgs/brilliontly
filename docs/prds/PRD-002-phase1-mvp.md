@@ -67,7 +67,7 @@ Build a fully functional investment dashboard that:
 ## 3. Pages
 
 ### 3.1 Landing Page (`/`)
-- Hero section explaining Brillontly
+- Hero section explaining Brilliontly
 - Feature highlights
 - CTA to sign up / log in
 

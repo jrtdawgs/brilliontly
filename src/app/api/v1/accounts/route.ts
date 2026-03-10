@@ -4,13 +4,13 @@ import { jwtVerify } from 'jose';
 import { createAccount, getAccounts, deleteAllAccounts } from '@/lib/db/database';
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'brillontly-dev-secret-change-in-production'
+  process.env.JWT_SECRET || 'brilliontly-dev-secret-change-in-production'
 );
 
 async function getUserId(): Promise<string | null> {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get('brillontly-token')?.value;
+    const token = cookieStore.get('brilliontly-token')?.value;
     if (!token) return null;
     const { payload } = await jwtVerify(token, JWT_SECRET);
     return payload.userId as string;

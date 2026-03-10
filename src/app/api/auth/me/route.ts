@@ -3,13 +3,13 @@ import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'brillontly-dev-secret-change-in-production'
+  process.env.JWT_SECRET || 'brilliontly-dev-secret-change-in-production'
 );
 
 export async function GET() {
   try {
     const cookieStore = await cookies();
-    const token = cookieStore.get('brillontly-token')?.value;
+    const token = cookieStore.get('brilliontly-token')?.value;
 
     if (!token) {
       return NextResponse.json(

@@ -9,7 +9,7 @@
 ## 1. Objective
 
 Allow users to securely connect and manage their real investment account data
-within Brillontly using encrypted storage. No brokerage passwords are ever
+within Brilliontly using encrypted storage. No brokerage passwords are ever
 stored in the application.
 
 ## 2. Security Architecture
@@ -36,7 +36,7 @@ stored in the application.
 
 ### Encryption Method
 - Algorithm: AES-256-GCM (authenticated encryption)
-- Key: 256-bit key from BRILLONTLY_ENCRYPTION_KEY env var
+- Key: 256-bit key from BRILLIONTLY_ENCRYPTION_KEY env var
 - IV: Unique random 12-byte IV per encryption operation
 - Auth Tag: 16-byte authentication tag to prevent tampering
 - Storage Format: base64(iv + authTag + ciphertext)
@@ -51,7 +51,7 @@ stored in the application.
 
 ### Method 2: CSV Import (Phase 1 - Now)
 - User exports CSV/statement from brokerage
-- Upload to Brillontly (processed in memory, never stored as raw file)
+- Upload to Brilliontly (processed in memory, never stored as raw file)
 - Parsed data encrypted and saved to database
 - Supports: Fidelity, Schwab, Robinhood, Vanguard CSV formats
 
@@ -59,7 +59,7 @@ stored in the application.
 - Free tier allows limited account connections
 - OAuth-based, user authorizes read-only access
 - Snaptrade handles credential security
-- Brillontly receives only holdings/balance data
+- Brilliontly receives only holdings/balance data
 - Auto-sync on configurable interval
 
 ### Method 4: Plaid Integration (Phase 3 - Future, Paid)

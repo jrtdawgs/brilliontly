@@ -72,7 +72,7 @@ export async function POST(request: Request) {
 export async function GET() {
   return NextResponse.json({
     success: true,
-    message: 'Brillontly Metrics API',
+    message: 'Brilliontly Metrics API',
     version: '1.0',
     endpoints: {
       'POST /api/v1/metrics': {

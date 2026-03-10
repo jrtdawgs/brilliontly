@@ -1,6 +1,6 @@
 // AES-256-GCM Encryption Library
 // All sensitive financial data is encrypted before storage
-// Encryption key comes from BRILLONTLY_ENCRYPTION_KEY environment variable
+// Encryption key comes from BRILLIONTLY_ENCRYPTION_KEY environment variable
 
 import { randomBytes, createCipheriv, createDecipheriv } from 'crypto';
 
@@ -9,17 +9,17 @@ const IV_LENGTH = 12; // 96 bits recommended for GCM
 const AUTH_TAG_LENGTH = 16; // 128 bits
 
 function getEncryptionKey(): Buffer {
-  const key = process.env.BRILLONTLY_ENCRYPTION_KEY;
+  const key = process.env.BRILLIONTLY_ENCRYPTION_KEY;
   if (!key) {
     throw new Error(
-      'BRILLONTLY_ENCRYPTION_KEY environment variable is not set. ' +
+      'BRILLIONTLY_ENCRYPTION_KEY environment variable is not set. ' +
       'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
     );
   }
   const keyBuffer = Buffer.from(key, 'hex');
   if (keyBuffer.length !== 32) {
     throw new Error(
-      'BRILLONTLY_ENCRYPTION_KEY must be a 64-character hex string (32 bytes). ' +
+      'BRILLIONTLY_ENCRYPTION_KEY must be a 64-character hex string (32 bytes). ' +
       'Generate one with: node -e "console.log(require(\'crypto\').randomBytes(32).toString(\'hex\'))"'
     );
   }

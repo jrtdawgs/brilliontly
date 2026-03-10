@@ -3,7 +3,7 @@ import { verifyUser } from '@/lib/db/users';
 import { SignJWT } from 'jose';
 
 const JWT_SECRET = new TextEncoder().encode(
-  process.env.JWT_SECRET || 'brillontly-dev-secret-change-in-production'
+  process.env.JWT_SECRET || 'brilliontly-dev-secret-change-in-production'
 );
 
 export async function POST(request: Request) {
@@ -42,7 +42,7 @@ export async function POST(request: Request) {
     });
 
     // Set HTTP-only cookie
-    response.cookies.set('brillontly-token', token, {
+    response.cookies.set('brilliontly-token', token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

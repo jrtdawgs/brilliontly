@@ -1,5 +1,5 @@
 // Yahoo Finance API client (using free unofficial API)
-// No API key required
+// No API key required - real-time market data
 
 export interface QuoteData {
   ticker: string;
@@ -11,9 +11,11 @@ export interface QuoteData {
   dayHigh: number;
   dayLow: number;
   volume: number;
+  avgVolume: number;
   marketCap: number;
   fiftyTwoWeekHigh: number;
   fiftyTwoWeekLow: number;
+  lastUpdated: string;
 }
 
 export interface HistoricalDataPoint {
@@ -25,15 +27,25 @@ export interface HistoricalDataPoint {
   volume: number;
 }
 
-// Fetch current quote for a ticker
+// In-memory cache with configurable TTL
+const quoteCache = new Map<string, { data: QuoteData; timestamp: number }>();
+const QUOTE_CACHE_TTL = 15_000; // 15 seconds for near-real-time
+
+// Fetch current quote for a ticker (15-second cache)
 export async function getQuote(ticker: string): Promise<QuoteData | null> {
+  // Check cache
+  const cached = quoteCache.get(ticker);
+  if (cached && Date.now() - cached.timestamp < QUOTE_CACHE_TTL) {
+    return cached.data;
+  }
+
   try {
-    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=1d`;
+    const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=5d`;
     const res = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       },
-      next: { revalidate: 300 }, // Cache for 5 minutes
+      cache: 'no-store', // Always fresh
     });
 
     if (!res.ok) return null;
@@ -46,7 +58,7 @@ export async function getQuote(ticker: string): Promise<QuoteData | null> {
     const price = meta.regularMarketPrice;
     const previousClose = meta.chartPreviousClose || meta.previousClose;
 
-    return {
+    const quote: QuoteData = {
       ticker: meta.symbol,
       name: meta.shortName || meta.longName || ticker,
       price,
@@ -56,17 +68,35 @@ export async function getQuote(ticker: string): Promise<QuoteData | null> {
       dayHigh: meta.regularMarketDayHigh || price,
       dayLow: meta.regularMarketDayLow || price,
       volume: meta.regularMarketVolume || 0,
+      avgVolume: 0,
       marketCap: meta.marketCap || 0,
       fiftyTwoWeekHigh: meta.fiftyTwoWeekHigh || price,
       fiftyTwoWeekLow: meta.fiftyTwoWeekLow || price,
+      lastUpdated: new Date().toISOString(),
     };
+
+    // Calculate average volume from 5-day data
+    const volumes = result.indicators?.quote?.[0]?.volume;
+    if (volumes && volumes.length > 1) {
+      const validVolumes = volumes.filter((v: number | null) => v != null && v > 0);
+      if (validVolumes.length > 1) {
+        // Average of all days except today
+        const pastVolumes = validVolumes.slice(0, -1);
+        quote.avgVolume = pastVolumes.reduce((s: number, v: number) => s + v, 0) / pastVolumes.length;
+      }
+    }
+
+    // Cache the result
+    quoteCache.set(ticker, { data: quote, timestamp: Date.now() });
+
+    return quote;
   } catch {
     console.error(`Failed to fetch quote for ${ticker}`);
     return null;
   }
 }
 
-// Fetch historical price data
+// Fetch historical price data (1-hour cache for history)
 export async function getHistoricalData(
   ticker: string,
   range: '1mo' | '3mo' | '6mo' | '1y' | '2y' | '5y' = '1y',
@@ -76,9 +106,9 @@ export async function getHistoricalData(
     const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=${interval}&range=${range}`;
     const res = await fetch(url, {
       headers: {
-        'User-Agent': 'Mozilla/5.0',
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       },
-      next: { revalidate: 3600 }, // Cache for 1 hour
+      next: { revalidate: 3600 },
     });
 
     if (!res.ok) return [];
@@ -112,13 +142,30 @@ export async function getHistoricalData(
   }
 }
 
-// Fetch quotes for multiple tickers
+// Fetch quotes for multiple tickers (parallel, batched)
 export async function getMultipleQuotes(tickers: string[]): Promise<Map<string, QuoteData>> {
   const results = new Map<string, QuoteData>();
-  const promises = tickers.map(async (ticker) => {
-    const quote = await getQuote(ticker);
-    if (quote) results.set(ticker, quote);
-  });
-  await Promise.all(promises);
+
+  // Process in batches of 10 to avoid rate limiting
+  const batchSize = 10;
+  for (let i = 0; i < tickers.length; i += batchSize) {
+    const batch = tickers.slice(i, i + batchSize);
+    const promises = batch.map(async (ticker) => {
+      const quote = await getQuote(ticker);
+      if (quote) results.set(ticker, quote);
+    });
+    await Promise.all(promises);
+  }
+
   return results;
+}
+
+// Get full signal data for a ticker (quote + historical for RSI/drawdown)
+export async function getTickerSignalData(ticker: string) {
+  const [quote, history] = await Promise.all([
+    getQuote(ticker),
+    getHistoricalData(ticker, '3mo', '1d'),
+  ]);
+
+  return { quote, history };
 }

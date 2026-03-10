@@ -72,7 +72,7 @@ export default function SignupPage() {
         <div className="text-center mb-8">
           <Link href="/">
             <span className="text-3xl font-bold bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">
-              Brillontly
+              Brilliontly
             </span>
           </Link>
           <p className="text-gray-400 mt-2">Create your free account</p>

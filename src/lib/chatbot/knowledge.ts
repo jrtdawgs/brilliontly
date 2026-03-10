@@ -1,4 +1,4 @@
-// Big Bull - The Brillontly Investment Advisor Chatbot
+// Big Bull - The Brilliontly Investment Advisor Chatbot
 // Knowledge-based system, not connected to any AI API
 // Speaks in clear, friendly English - never code-like text
 
@@ -204,7 +204,7 @@ export const KNOWLEDGE_BASE: KnowledgeEntry[] = [
   // --- GENERAL ---
   {
     keywords: ['hello', 'hi', 'hey', 'sup', 'what up'],
-    response: 'Hey there! I am Big Bull, your Brillontly investment buddy. I can help you understand your portfolio, explain what all these financial numbers mean, or chat about investment strategy. What would you like to know?',
+    response: 'Hey there! I am Big Bull, your Brilliontly investment buddy. I can help you understand your portfolio, explain what all these financial numbers mean, or chat about investment strategy. What would you like to know?',
     category: 'greeting',
   },
   {

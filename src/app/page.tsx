@@ -6,7 +6,7 @@ export default function LandingPage() {
       {/* Nav */}
       <nav className="flex items-center justify-between px-6 lg:px-12 py-4 border-b border-[#1e293b]">
         <span className="text-2xl font-bold bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">
-          Brillontly
+          Brilliontly
         </span>
         <Link
           href="/investing"
@@ -175,14 +175,14 @@ export default function LandingPage() {
           href="/investing"
           className="inline-block bg-gradient-to-r from-green-600 to-cyan-600 hover:from-green-500 hover:to-cyan-500 text-white px-10 py-4 rounded-xl text-lg font-semibold transition-all shadow-lg"
         >
-          Launch Brillontly
+          Launch Brilliontly
         </Link>
       </section>
 
       {/* Footer */}
       <footer className="border-t border-[#1e293b] px-6 py-8">
         <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <span className="text-sm text-gray-500">Brillontly - For informational purposes only. Not financial advice.</span>
+          <span className="text-sm text-gray-500">Brilliontly - For informational purposes only. Not financial advice.</span>
           <span className="text-sm text-gray-600">Built by Joshua Torres</span>
         </div>
       </footer>

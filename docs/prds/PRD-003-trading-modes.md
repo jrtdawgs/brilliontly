@@ -8,7 +8,7 @@
 
 ## 1. Objective
 
-Create three distinct sections/modes within Brillontly, each tailored to a different
+Create three distinct sections/modes within Brilliontly, each tailored to a different
 investing style with relevant tools, signals, and metrics for that approach.
 
 ## 2. The Three Modes
