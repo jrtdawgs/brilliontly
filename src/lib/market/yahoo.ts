@@ -29,7 +29,7 @@ export interface HistoricalDataPoint {
 
 // In-memory cache with configurable TTL
 const quoteCache = new Map<string, { data: QuoteData; timestamp: number }>();
-const QUOTE_CACHE_TTL = 15_000; // 15 seconds for near-real-time
+const QUOTE_CACHE_TTL = 8_000; // 8 seconds for near-real-time
 
 // Fetch current quote for a ticker (15-second cache)
 export async function getQuote(ticker: string): Promise<QuoteData | null> {

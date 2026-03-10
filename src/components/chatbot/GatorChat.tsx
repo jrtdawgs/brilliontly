@@ -3,90 +3,75 @@
 import { useState, useRef, useEffect } from 'react';
 import { findResponse, BIGBULL_CONFIG, type ChatMessage } from '@/lib/chatbot/knowledge';
 
-// Horizontal alligator SVG - Big Bull the Gator
-// Dark navy outline so the green body pops against dark backgrounds
+// Clean alligator SVG - Big Bull the Gator
+// Dark navy outline, bright green body, long sweeping tail
 function BigBullIcon({ size = 'large' }: { size?: 'large' | 'small' }) {
-  const w = size === 'large' ? 'w-16 h-10' : 'w-10 h-7';
-  const stroke = '#0f172a'; // Navy/dark outline
-  const sw = '1.4'; // Stroke width
+  const w = size === 'large' ? 'w-20 h-10' : 'w-12 h-7';
+  const o = '#0f172a'; // Dark navy outline
   return (
-    <svg viewBox="0 0 140 56" className={w} fill="none">
-      {/* ===== LONG TAIL (thick, muscular, tapered with curves) ===== */}
+    <svg viewBox="0 0 180 52" className={w} fill="none">
+      {/* ===== TAIL - long sweeping curve ===== */}
       <path
-        d="M2 32 Q4 22 10 26 Q14 16 18 24 Q20 30 22 28"
-        fill="#16a34a" stroke={stroke} strokeWidth={sw}
+        d="M3 26 C8 18, 16 14, 24 18 C30 21, 34 24, 40 26
+           C34 28, 30 31, 24 34 C16 38, 8 34, 3 26Z"
+        fill="#22c55e" stroke={o} strokeWidth="1.5"
       />
-      <path d="M2 32 Q4 38 10 36 Q14 40 18 34 Q20 30 22 32" fill="#1a8c3e" stroke={stroke} strokeWidth={sw} />
-      {/* Tail tip */}
-      <path d="M1 32 Q-1 29 1 26" stroke={stroke} strokeWidth="2" strokeLinecap="round" fill="none" />
-      {/* Tail spikes/scutes */}
-      <path d="M8 20 L10 15 L12 20" fill="#15803d" stroke={stroke} strokeWidth="0.8" />
-      <path d="M13 18 L15 13 L17 18" fill="#15803d" stroke={stroke} strokeWidth="0.8" />
-      <path d="M18 17 L20 12 L22 17" fill="#16a34a" stroke={stroke} strokeWidth="0.8" />
+      {/* Tail ridge spikes */}
+      <path d="M10 16 L12.5 10 L15 16" fill="#16a34a" stroke={o} strokeWidth="0.8" />
+      <path d="M18 14 L20.5 8 L23 14" fill="#16a34a" stroke={o} strokeWidth="0.8" />
+      <path d="M26 14 L28.5 8 L31 14" fill="#16a34a" stroke={o} strokeWidth="0.8" />
 
-      {/* ===== BODY (muscular oval) ===== */}
-      <ellipse cx="42" cy="30" rx="22" ry="14" fill="#22c55e" stroke={stroke} strokeWidth={sw} />
-      {/* Belly (lighter underside) */}
-      <ellipse cx="42" cy="36" rx="16" ry="6" fill="#4ade80" opacity="0.3" />
-      {/* Body scute ridges along spine */}
-      <path d="M24 19 L27 13 L30 19" fill="#16a34a" stroke={stroke} strokeWidth="0.8" />
-      <path d="M30 17 L33 11 L36 17" fill="#15803d" stroke={stroke} strokeWidth="0.8" />
-      <path d="M36 16 L39 10 L42 16" fill="#16a34a" stroke={stroke} strokeWidth="0.8" />
-      <path d="M42 16 L45 10 L48 16" fill="#15803d" stroke={stroke} strokeWidth="0.8" />
-      <path d="M48 17 L51 12 L54 17" fill="#16a34a" stroke={stroke} strokeWidth="0.8" />
-      {/* Body texture */}
-      <path d="M28 28 Q38 26 52 28" stroke="#1a8c3e" strokeWidth="0.6" fill="none" opacity="0.5" />
-      <path d="M30 33 Q40 32 50 34" stroke="#1a8c3e" strokeWidth="0.5" fill="none" opacity="0.4" />
+      {/* ===== BODY ===== */}
+      <ellipse cx="60" cy="26" rx="24" ry="14" fill="#22c55e" stroke={o} strokeWidth="1.5" />
+      {/* Belly highlight */}
+      <ellipse cx="60" cy="32" rx="16" ry="5" fill="#4ade80" opacity="0.25" />
+      {/* Spine ridge spikes */}
+      <path d="M40 14 L42.5 8 L45 14" fill="#16a34a" stroke={o} strokeWidth="0.8" />
+      <path d="M48 12 L50.5 6 L53 12" fill="#15803d" stroke={o} strokeWidth="0.8" />
+      <path d="M56 12 L58.5 6 L61 12" fill="#16a34a" stroke={o} strokeWidth="0.8" />
+      <path d="M64 12 L66.5 7 L69 12" fill="#15803d" stroke={o} strokeWidth="0.8" />
+      {/* Scale texture */}
+      <path d="M46 24 Q56 22 70 24" stroke="#1a8c3e" strokeWidth="0.6" fill="none" opacity="0.5" />
+      <path d="M48 30 Q58 29 68 30" stroke="#1a8c3e" strokeWidth="0.5" fill="none" opacity="0.4" />
 
-      {/* ===== LEGS (stocky, splayed with toes) ===== */}
-      {/* Back left leg */}
-      <path d="M28 40 L24 50 L27 48 L29 51 L31 48 L30 40" fill="#1a8c3e" stroke={stroke} strokeWidth="1" />
-      {/* Front left leg */}
-      <path d="M52 39 L49 49 L52 47 L54 50 L56 47 L55 39" fill="#1a8c3e" stroke={stroke} strokeWidth="1" />
+      {/* ===== LEGS ===== */}
+      <path d="M46 37 L42 47 L45 45 L47 48 L49 45 L48 37" fill="#1a8c3e" stroke={o} strokeWidth="1" />
+      <path d="M70 36 L67 46 L70 44 L72 47 L74 44 L73 36" fill="#1a8c3e" stroke={o} strokeWidth="1" />
 
       {/* ===== HEAD ===== */}
-      {/* Neck/head base */}
-      <ellipse cx="66" cy="28" rx="13" ry="11" fill="#22c55e" stroke={stroke} strokeWidth={sw} />
-      {/* Snout - long, flat, powerful */}
-      <path d="M66 21 Q82 17 102 21 Q104 24 102 27 Q82 30 66 27 Z" fill="#22c55e" stroke={stroke} strokeWidth={sw} />
-      {/* Upper jaw ridge (darker stripe) */}
-      <path d="M68 21 Q84 18 102 21 Q84 20 68 22 Z" fill="#1a8c3e" />
-      {/* Lower jaw (slightly open) */}
-      <path d="M66 28 Q82 31 100 28 Q98 26 66 27 Z" fill="#2dd671" stroke={stroke} strokeWidth="1" />
-      {/* Jaw separation line */}
-      <path d="M64 25 Q82 27 104 24" stroke={stroke} strokeWidth="1.3" fill="none" />
+      <ellipse cx="86" cy="24" rx="14" ry="12" fill="#22c55e" stroke={o} strokeWidth="1.5" />
+      {/* Snout */}
+      <path
+        d="M86 16 Q105 12, 130 17 Q132 20, 130 23 Q105 27, 86 24Z"
+        fill="#22c55e" stroke={o} strokeWidth="1.5"
+      />
+      {/* Upper jaw darker */}
+      <path d="M88 16 Q106 13, 130 17 Q106 15, 88 18Z" fill="#1a8c3e" />
+      {/* Jaw line */}
+      <path d="M84 21 Q108 23, 132 20" stroke={o} strokeWidth="1.2" fill="none" />
+      {/* Lower jaw */}
+      <path d="M86 24 Q105 28, 128 24 Q105 22, 86 23Z" fill="#2dd671" stroke={o} strokeWidth="1" />
 
-      {/* Teeth - top jaw */}
-      <path d="M76 24 L77 27.5 L78 24" fill="white" stroke={stroke} strokeWidth="0.4" />
-      <path d="M82 23.5 L83 27 L84 23.5" fill="white" stroke={stroke} strokeWidth="0.4" />
-      <path d="M88 23 L89 26.5 L90 23" fill="white" stroke={stroke} strokeWidth="0.4" />
-      <path d="M94 23.5 L95 26.5 L96 23.5" fill="white" stroke={stroke} strokeWidth="0.4" />
-      {/* Teeth - bottom jaw */}
-      <path d="M79 27 L80 24.5 L81 27" fill="white" stroke={stroke} strokeWidth="0.4" />
-      <path d="M85 26.5 L86 24 L87 26.5" fill="white" stroke={stroke} strokeWidth="0.4" />
-      <path d="M91 26.5 L92 24 L93 26.5" fill="white" stroke={stroke} strokeWidth="0.4" />
+      {/* Teeth top */}
+      <path d="M100 20 L101.5 23.5 L103 20" fill="white" stroke={o} strokeWidth="0.5" />
+      <path d="M108 19 L109.5 22.5 L111 19" fill="white" stroke={o} strokeWidth="0.5" />
+      <path d="M116 18.5 L117.5 22 L119 18.5" fill="white" stroke={o} strokeWidth="0.5" />
+      <path d="M123 19 L124 22 L125 19" fill="white" stroke={o} strokeWidth="0.5" />
+      {/* Teeth bottom */}
+      <path d="M104 23 L105.5 20.5 L107 23" fill="white" stroke={o} strokeWidth="0.5" />
+      <path d="M112 22.5 L113.5 20 L115 22.5" fill="white" stroke={o} strokeWidth="0.5" />
+      <path d="M120 22 L121 20 L122 22" fill="white" stroke={o} strokeWidth="0.5" />
 
-      {/* ===== EYE BUMP (protruding above head like real gator) ===== */}
-      <ellipse cx="64" cy="17" rx="5" ry="5.5" fill="#22c55e" stroke={stroke} strokeWidth={sw} />
-      <ellipse cx="64" cy="16.5" rx="3.8" ry="4.2" fill="#1a8c3e" />
-      {/* Eye */}
-      <circle cx="64" cy="16" r="3.2" fill="#f0fdf4" stroke={stroke} strokeWidth="0.6" />
-      <circle cx="64.5" cy="15.5" r="2" fill="#15803d" />
-      <circle cx="65" cy="15" r="0.9" fill="#0a0f1a" />
-      {/* Eye shine */}
-      <circle cx="63" cy="14.5" r="0.7" fill="white" opacity="0.85" />
+      {/* ===== EYE (raised bump) ===== */}
+      <ellipse cx="84" cy="12" rx="5.5" ry="6" fill="#22c55e" stroke={o} strokeWidth="1.5" />
+      <circle cx="84" cy="11.5" r="3.5" fill="#f0fdf4" stroke={o} strokeWidth="0.6" />
+      <circle cx="84.5" cy="11" r="2.2" fill="#15803d" />
+      <circle cx="85" cy="10.5" r="1" fill="#0a0f1a" />
+      <circle cx="83.2" cy="10" r="0.8" fill="white" opacity="0.85" />
 
       {/* Nostrils */}
-      <circle cx="101" cy="22" r="1.1" fill={stroke} />
-      <circle cx="101" cy="25.5" r="1.1" fill={stroke} />
-
-      {/* Armored plate texture on body */}
-      <rect x="34" y="22" width="3" height="2.5" rx="0.5" fill="#1a8c3e" opacity="0.4" />
-      <rect x="39" y="21" width="3" height="2.5" rx="0.5" fill="#1a8c3e" opacity="0.4" />
-      <rect x="44" y="22" width="3" height="2.5" rx="0.5" fill="#1a8c3e" opacity="0.4" />
-      <rect x="36" y="26" width="3" height="2.5" rx="0.5" fill="#1a8c3e" opacity="0.3" />
-      <rect x="41" y="25" width="3" height="2.5" rx="0.5" fill="#1a8c3e" opacity="0.3" />
-      <rect x="46" y="26" width="3" height="2.5" rx="0.5" fill="#1a8c3e" opacity="0.3" />
+      <circle cx="129" cy="18" r="1" fill={o} />
+      <circle cx="129" cy="22" r="1" fill={o} />
     </svg>
   );
 }

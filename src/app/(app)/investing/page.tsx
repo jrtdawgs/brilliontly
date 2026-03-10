@@ -30,7 +30,7 @@ const PORTFOLIO_TICKERS = ['FXAIX', 'QQQM', 'SPY', 'QQQ', 'SOXL', 'BTC-USD', 'ET
 
 export default function InvestingPage() {
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null);
-  const { data: signalData, loading, lastUpdated, refresh } = useSignalData(30_000);
+  const { data: signalData, loading, lastUpdated, refresh } = useSignalData(10_000);
 
   // Get live prices for portfolio tickers
   const getPrice = (ticker: string) => signalData[ticker]?.quote?.price;

@@ -5,7 +5,7 @@ import { getVIXSignal, getDollarSignal, getRateEnvironment, getYieldCurveSignal 
 import { getSignalColor, getSignalBg } from '@/lib/utils';
 
 export default function LiveMacroPanel() {
-  const { data, loading, lastUpdated } = useMacroData(30_000);
+  const { data, loading, lastUpdated } = useMacroData(10_000);
 
   const signalMap = {
     bullish: 'buy' as const,

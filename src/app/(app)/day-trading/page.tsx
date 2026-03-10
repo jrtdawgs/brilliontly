@@ -12,7 +12,7 @@ type Category = 'all' | 'Equity' | 'Leveraged' | 'Crypto' | 'Crypto ETF' | 'Comm
 export default function DayTradingPage() {
   const [filter, setFilter] = useState<Category>('all');
   const [sortBy, setSortBy] = useState<'signal' | 'rsi' | 'drawdown' | 'volume'>('signal');
-  const { data: signalData, loading, lastUpdated, refresh } = useSignalData(30_000);
+  const { data: signalData, loading, lastUpdated, refresh } = useSignalData(10_000);
 
   const assets = Object.entries(signalData).map(([ticker, s]) => ({
     ticker,
