@@ -1,65 +1,191 @@
-import Image from "next/image";
+import Link from 'next/link';
 
-export default function Home() {
+export default function LandingPage() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+    <div className="min-h-screen bg-[#0a0f1a]">
+      {/* Nav */}
+      <nav className="flex items-center justify-between px-6 lg:px-12 py-4 border-b border-[#1e293b]">
+        <span className="text-2xl font-bold bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">
+          Brillontly
+        </span>
+        <Link
+          href="/investing"
+          className="bg-green-600 hover:bg-green-500 text-white px-5 py-2 rounded-lg text-sm font-medium transition-colors"
+        >
+          Launch App
+        </Link>
+      </nav>
+
+      {/* Hero */}
+      <section className="max-w-6xl mx-auto px-6 py-24 text-center">
+        <div className="inline-block px-4 py-1.5 bg-green-500/10 border border-green-500/30 rounded-full text-green-400 text-xs font-medium mb-6">
+          Institutional-grade analytics for everyone
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+        <h1 className="text-5xl lg:text-7xl font-bold text-white leading-tight mb-6">
+          Know When to{' '}
+          <span className="bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">
+            Buy
+          </span>
+          <br />
+          Not Just What to Buy
+        </h1>
+        <p className="text-xl text-gray-400 max-w-2xl mx-auto mb-10 leading-relaxed">
+          RSI signals. Capitulation detection. VIX tracking. Drawdown analysis.
+          Stop guessing and start using the same metrics the pros use.
+        </p>
+        <div className="flex items-center justify-center gap-4">
+          <Link
+            href="/investing"
+            className="bg-green-600 hover:bg-green-500 text-white px-8 py-3.5 rounded-xl text-base font-semibold transition-colors shadow-lg shadow-green-600/25"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            Get Started Free
+          </Link>
+          <Link
+            href="/day-trading"
+            className="border border-[#334155] hover:border-gray-500 text-white px-8 py-3.5 rounded-xl text-base font-medium transition-colors"
           >
-            Documentation
-          </a>
+            View Signals
+          </Link>
         </div>
-      </main>
+      </section>
+
+      {/* Features Grid */}
+      <section className="max-w-6xl mx-auto px-6 py-16">
+        <h2 className="text-3xl font-bold text-white text-center mb-12">
+          Three Modes. One Platform.
+        </h2>
+        <div className="grid md:grid-cols-3 gap-6">
+          <Link href="/investing" className="group">
+            <div className="bg-[#111827] border border-[#1e293b] rounded-2xl p-8 h-full hover:border-green-500/50 transition-all group-hover:shadow-lg group-hover:shadow-green-500/5">
+              <div className="w-12 h-12 bg-green-500/15 rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-green-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M3 13l4-4 4 4 4-8 4 4" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-3">Long-Term Investing</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Portfolio analytics, Sharpe ratio, alpha, beta, correlation matrix, rebalancing signals, and capitulation buy alerts.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {['Sharpe Ratio', 'Max Drawdown', 'Correlation', 'RSI Signals'].map((tag) => (
+                  <span key={tag} className="text-xs bg-green-500/10 text-green-400 px-2 py-1 rounded">{tag}</span>
+                ))}
+              </div>
+            </div>
+          </Link>
+
+          <Link href="/day-trading" className="group">
+            <div className="bg-[#111827] border border-[#1e293b] rounded-2xl p-8 h-full hover:border-amber-500/50 transition-all group-hover:shadow-lg group-hover:shadow-amber-500/5">
+              <div className="w-12 h-12 bg-amber-500/15 rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-amber-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M13 2L3 14h7l-2 8 10-12h-7l2-8z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-3">Day Trading</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Real-time RSI, volume spikes, moving average crossovers, VIX fear signals, and capitulation detection.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {['RSI', 'Volume Spikes', 'VIX Alerts', 'MA Crossovers'].map((tag) => (
+                  <span key={tag} className="text-xs bg-amber-500/10 text-amber-400 px-2 py-1 rounded">{tag}</span>
+                ))}
+              </div>
+            </div>
+          </Link>
+
+          <Link href="/retirement" className="group">
+            <div className="bg-[#111827] border border-[#1e293b] rounded-2xl p-8 h-full hover:border-blue-500/50 transition-all group-hover:shadow-lg group-hover:shadow-blue-500/5">
+              <div className="w-12 h-12 bg-blue-500/15 rounded-xl flex items-center justify-center mb-4">
+                <svg className="w-6 h-6 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+              </div>
+              <h3 className="text-xl font-semibold text-white mb-3">Retirement Planning</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                Projection calculators, contribution tracking, 401k vs Roth analysis, safe withdrawal rates, and glide path recommendations.
+              </p>
+              <div className="mt-4 flex flex-wrap gap-2">
+                {['Projections', '401k Tracking', 'Roth IRA', '4% Rule'].map((tag) => (
+                  <span key={tag} className="text-xs bg-blue-500/10 text-blue-400 px-2 py-1 rounded">{tag}</span>
+                ))}
+              </div>
+            </div>
+          </Link>
+        </div>
+      </section>
+
+      {/* Metrics Showcase */}
+      <section className="max-w-6xl mx-auto px-6 py-16 border-t border-[#1e293b]">
+        <h2 className="text-3xl font-bold text-white text-center mb-4">
+          Advanced Metrics Made Simple
+        </h2>
+        <p className="text-gray-400 text-center max-w-xl mx-auto mb-12">
+          Every metric comes with a plain English explanation. No finance degree required.
+        </p>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[
+            { label: 'Sharpe Ratio', value: '1.42', color: 'text-green-400' },
+            { label: 'RSI', value: '34.2', color: 'text-amber-400' },
+            { label: 'Max Drawdown', value: '-12.3%', color: 'text-amber-400' },
+            { label: 'Beta', value: '1.18', color: 'text-blue-400' },
+            { label: 'Alpha', value: '+3.2%', color: 'text-green-400' },
+            { label: 'VIX', value: '18.5', color: 'text-cyan-400' },
+            { label: 'Volatility', value: '16.8%', color: 'text-amber-400' },
+            { label: 'Sortino', value: '1.87', color: 'text-green-400' },
+          ].map((m) => (
+            <div key={m.label} className="bg-[#111827] border border-[#1e293b] rounded-xl p-4 text-center">
+              <div className="text-xs text-gray-500 mb-1">{m.label}</div>
+              <div className={`text-2xl font-bold ${m.color}`}>{m.value}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Assets Tracked */}
+      <section className="max-w-6xl mx-auto px-6 py-16 border-t border-[#1e293b]">
+        <h2 className="text-2xl font-bold text-white text-center mb-8">
+          Signals for Every Asset Class
+        </h2>
+        <div className="flex flex-wrap justify-center gap-3">
+          {[
+            'SPY', 'QQQ', 'NVDA', 'AAPL', 'MSFT', 'TSLA', 'GOOG', 'AMZN', 'META',
+            'SOXL', 'TQQQ', 'BITX', 'ETHU',
+            'BTC', 'ETH',
+            'GLD', 'SLV',
+            'VIX', 'TLT', 'DXY',
+            'VOO', 'VTI', 'SCHD', 'IWM',
+          ].map((ticker) => (
+            <span
+              key={ticker}
+              className="text-xs bg-[#111827] border border-[#1e293b] text-gray-300 px-3 py-1.5 rounded-lg font-mono"
+            >
+              {ticker}
+            </span>
+          ))}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="max-w-4xl mx-auto px-6 py-20 text-center">
+        <h2 className="text-3xl font-bold text-white mb-4">Stop Investing Blind</h2>
+        <p className="text-gray-400 mb-8">
+          Get the analytics edge that institutional investors have always had. Completely free.
+        </p>
+        <Link
+          href="/investing"
+          className="inline-block bg-gradient-to-r from-green-600 to-cyan-600 hover:from-green-500 hover:to-cyan-500 text-white px-10 py-4 rounded-xl text-lg font-semibold transition-all shadow-lg"
+        >
+          Launch Brillontly
+        </Link>
+      </section>
+
+      {/* Footer */}
+      <footer className="border-t border-[#1e293b] px-6 py-8">
+        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+          <span className="text-sm text-gray-500">Brillontly - For informational purposes only. Not financial advice.</span>
+          <span className="text-sm text-gray-600">Built by Joshua Torres</span>
+        </div>
+      </footer>
     </div>
   );
 }
