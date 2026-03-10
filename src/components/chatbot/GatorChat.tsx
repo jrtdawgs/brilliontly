@@ -3,46 +3,76 @@
 import { useState, useRef, useEffect } from 'react';
 import { findResponse, BIGBULL_CONFIG, type ChatMessage } from '@/lib/chatbot/knowledge';
 
-// Horizontal alligator SVG for the bubble button
+// Horizontal alligator SVG - Big Bull the Gator
 function BigBullIcon({ size = 'large' }: { size?: 'large' | 'small' }) {
-  const w = size === 'large' ? 'w-12 h-8' : 'w-8 h-6';
+  const w = size === 'large' ? 'w-14 h-9' : 'w-9 h-6';
   return (
-    <svg viewBox="0 0 96 48" className={w} fill="none">
-      {/* Tail */}
-      <path d="M4 28 Q8 20 14 24 Q10 30 14 32" fill="#16a34a" />
-      <path d="M4 28 Q8 34 14 32" fill="#22c55e" />
-      {/* Body */}
-      <ellipse cx="32" cy="28" rx="20" ry="12" fill="#22c55e" />
-      {/* Scales/bumps on back */}
-      <circle cx="22" cy="18" r="2.5" fill="#16a34a" />
-      <circle cx="28" cy="16.5" r="2.5" fill="#16a34a" />
-      <circle cx="34" cy="16" r="2.5" fill="#16a34a" />
-      <circle cx="40" cy="17" r="2" fill="#16a34a" />
-      {/* Belly */}
-      <ellipse cx="32" cy="32" rx="16" ry="6" fill="#4ade80" opacity="0.4" />
-      {/* Legs */}
-      <path d="M20 36 L17 42 L20 41 L22 43 L23 38" fill="#16a34a" />
-      <path d="M40 36 L37 42 L40 41 L42 43 L43 38" fill="#16a34a" />
-      {/* Head - long snout */}
-      <ellipse cx="56" cy="26" rx="12" ry="9" fill="#16a34a" />
-      <ellipse cx="64" cy="24" rx="14" ry="6" fill="#22c55e" />
-      {/* Upper jaw */}
-      <path d="M62 20 Q72 18 80 22 Q76 24 62 24 Z" fill="#16a34a" />
-      {/* Lower jaw */}
-      <path d="M62 26 Q72 28 78 26 Q74 24 62 24 Z" fill="#22c55e" />
-      {/* Teeth */}
-      <path d="M68 22 L69 24.5 L70 22" fill="white" />
-      <path d="M73 21 L74 23.5 L75 21" fill="white" />
-      <path d="M69 26 L70 24 L71 26" fill="white" />
-      {/* Mouth line */}
-      <path d="M56 24 Q68 25 80 24" stroke="#15803d" strokeWidth="1" fill="none" />
-      {/* Eye bumps */}
-      <ellipse cx="54" cy="18" rx="4" ry="4.5" fill="#16a34a" />
-      {/* Eyes */}
-      <circle cx="54" cy="17" r="3" fill="white" />
-      <circle cx="54" cy="17" r="1.5" fill="#0a0f1a" />
-      {/* Nostril */}
-      <circle cx="77" cy="21" r="1" fill="#15803d" />
+    <svg viewBox="0 0 120 52" className={w} fill="none">
+      {/* ===== TAIL (wavy, thick, tapered) ===== */}
+      <path d="M2 30 Q6 18 12 24 Q9 30 13 34 Q10 38 15 32" fill="#16a34a" />
+      <path d="M2 30 Q6 38 13 34" fill="#1a8c3e" />
+      {/* Tail spikes */}
+      <path d="M6 22 L8 18 L10 23" fill="#15803d" />
+      <path d="M10 20 L12 16 L14 21" fill="#15803d" />
+
+      {/* ===== BODY ===== */}
+      <ellipse cx="36" cy="30" rx="22" ry="13" fill="#22c55e" />
+      {/* Belly (lighter underside) */}
+      <ellipse cx="36" cy="35" rx="17" ry="6" fill="#4ade80" opacity="0.35" />
+      {/* Scute ridges along spine */}
+      <path d="M16 20 L19 15 L22 20" fill="#16a34a" />
+      <path d="M22 18 L25 13 L28 18" fill="#16a34a" />
+      <path d="M28 17 L31 12 L34 17" fill="#15803d" />
+      <path d="M34 16.5 L37 12 L40 17" fill="#16a34a" />
+      <path d="M40 17 L43 13 L46 18" fill="#15803d" />
+      {/* Body texture lines */}
+      <path d="M22 28 Q30 26 44 28" stroke="#1a8c3e" strokeWidth="0.5" fill="none" opacity="0.5" />
+      <path d="M24 32 Q34 31 42 33" stroke="#1a8c3e" strokeWidth="0.5" fill="none" opacity="0.4" />
+
+      {/* ===== LEGS ===== */}
+      {/* Back leg */}
+      <path d="M22 38 L18 46 L21 44 L23 47 L25 44 L24 38" fill="#1a8c3e" />
+      {/* Front leg */}
+      <path d="M46 37 L43 45 L46 43 L48 46 L50 43 L49 37" fill="#1a8c3e" />
+
+      {/* ===== HEAD ===== */}
+      {/* Neck/head base */}
+      <ellipse cx="58" cy="28" rx="12" ry="10" fill="#22c55e" />
+      {/* Snout - long and flat */}
+      <path d="M58 22 Q72 18 88 22 Q90 24 88 26 Q72 28 58 26 Z" fill="#22c55e" />
+      {/* Upper jaw ridge */}
+      <path d="M60 22 Q74 19 88 22 Q74 21 60 23 Z" fill="#1a8c3e" />
+      {/* Lower jaw (slightly separated) */}
+      <path d="M58 27 Q72 29 86 27 Q84 25 58 26 Z" fill="#2dd671" />
+      {/* Jaw separation line */}
+      <path d="M56 25 Q72 26.5 90 24.5" stroke="#15803d" strokeWidth="1.2" fill="none" />
+
+      {/* Teeth - top jaw (hanging down) */}
+      <path d="M66 24 L67 27 L68 24" fill="white" />
+      <path d="M72 23.5 L73 26.5 L74 23.5" fill="white" />
+      <path d="M78 23 L79 26 L80 23" fill="white" />
+      <path d="M83 23.5 L84 26 L85 23.5" fill="white" />
+      {/* Teeth - bottom jaw (pointing up) */}
+      <path d="M69 26.5 L70 24 L71 26.5" fill="white" />
+      <path d="M75 26 L76 23.5 L77 26" fill="white" />
+      <path d="M81 26 L82 24 L83 26" fill="white" />
+
+      {/* ===== EYE BUMPS (protruding above head) ===== */}
+      <ellipse cx="56" cy="18" rx="4.5" ry="5" fill="#22c55e" />
+      <ellipse cx="56" cy="17.5" rx="3.5" ry="4" fill="#1a8c3e" />
+      {/* Eye */}
+      <circle cx="56" cy="17" r="3" fill="#f0fdf4" />
+      <circle cx="56.5" cy="16.5" r="1.8" fill="#15803d" />
+      <circle cx="57" cy="16" r="0.8" fill="#0a0f1a" />
+      {/* Eye shine */}
+      <circle cx="55" cy="15.5" r="0.6" fill="white" opacity="0.8" />
+
+      {/* Nostrils at tip of snout */}
+      <circle cx="87" cy="22.5" r="1" fill="#15803d" />
+      <circle cx="87" cy="25" r="1" fill="#15803d" />
+
+      {/* ===== TAIL TIP ===== */}
+      <path d="M2 30 Q0 28 2 26" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" fill="none" />
     </svg>
   );
 }
