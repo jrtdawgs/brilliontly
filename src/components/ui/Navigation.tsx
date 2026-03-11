@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import Image from 'next/image';
+import { usePathname, useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
 import { cn } from '@/lib/utils';
 
 const modes = [
@@ -41,6 +43,27 @@ function getIcon(icon: string) {
 
 export default function Navigation() {
   const pathname = usePathname();
+  const router = useRouter();
+  const [user, setUser] = useState<{ email: string } | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.success && data.user) {
+          setUser(data.user);
+        }
+      })
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, [pathname]);
+
+  async function handleLogout() {
+    await fetch('/api/auth/logout', { method: 'POST' });
+    setUser(null);
+    router.push('/');
+  }
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-[#0a0f1a]/95 backdrop-blur-sm border-b border-[#1e293b]">
@@ -48,6 +71,14 @@ export default function Navigation() {
         <div className="flex items-center justify-between h-16">
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2">
+            <Image
+              src="/brilliontly-logo.svg"
+              alt="Brilliontly"
+              width={36}
+              height={36}
+              className="select-none"
+              draggable={false}
+            />
             <span className="text-2xl font-bold bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent">
               Brilliontly
             </span>
@@ -86,18 +117,32 @@ export default function Navigation() {
             >
               Accounts
             </Link>
-            <Link
-              href="/login"
-              className="text-sm font-medium text-gray-400 hover:text-white transition-colors"
-            >
-              Log In
-            </Link>
-            <Link
-              href="/signup"
-              className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
-            >
-              Sign Up
-            </Link>
+            {loading ? null : user ? (
+              <>
+                <span className="text-sm text-gray-400">{user.email}</span>
+                <button
+                  onClick={handleLogout}
+                  className="text-sm font-medium text-gray-400 hover:text-white transition-colors"
+                >
+                  Log Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/login"
+                  className="text-sm font-medium text-gray-400 hover:text-white transition-colors"
+                >
+                  Log In
+                </Link>
+                <Link
+                  href="/signup"
+                  className="bg-green-600 hover:bg-green-500 text-white px-3 py-1.5 rounded-lg text-sm font-medium transition-colors"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </div>

@@ -39,7 +39,8 @@ export async function POST(request: Request) {
       success: true,
       data: { id: user.id, email: user.email, name: user.name },
     }, { status: 201 });
-  } catch {
+  } catch (err: unknown) {
+    console.error('Signup error:', err instanceof Error ? err.message : err);
     return NextResponse.json(
       { success: false, error: 'Something went wrong. Please try again.' },
       { status: 500 }

@@ -3,6 +3,7 @@ import { cookies } from 'next/headers';
 import { jwtVerify } from 'jose';
 import {
   registerUser,
+  deleteUser,
   getConnectionLink,
   isSnapTradeConfigured,
 } from '@/lib/brokerage/snaptrade';
@@ -43,17 +44,20 @@ export async function POST() {
   }
 
   try {
-    // Register user with SnapTrade (idempotent - safe to call multiple times)
+    // Register user with SnapTrade
     let userSecret: string;
     try {
       const registration = await registerUser(user.userId);
       userSecret = registration.userSecret!;
     } catch (err: unknown) {
-      // User might already be registered - try to get their existing secret
-      // SnapTrade returns 400 if user already exists
-      const error = err as { status?: number; body?: { detail?: string } };
-      if (error?.status === 400 || error?.body?.detail?.includes('already')) {
-        // Re-register to get a new secret
+      // User already exists — delete and re-register to get a fresh secret
+      const error = err as { status?: number; body?: { detail?: string }; message?: string };
+      if (error?.status === 400 || error?.body?.detail?.includes('already') || error?.message?.includes('already')) {
+        try {
+          await deleteUser(user.userId);
+        } catch {
+          // Delete might fail if user doesn't exist on their end, that's fine
+        }
         const registration = await registerUser(user.userId);
         userSecret = registration.userSecret!;
       } else {
@@ -83,9 +87,11 @@ export async function POST() {
     });
   } catch (error: unknown) {
     console.error('SnapTrade connect error:', error);
-    const errMsg = error instanceof Error ? error.message : 'Failed to create brokerage connection';
+    const err = error as { message?: string; status?: number; body?: unknown };
+    const errMsg = err?.message || 'Failed to create brokerage connection';
+    const detail = err?.body ? JSON.stringify(err.body) : undefined;
     return NextResponse.json(
-      { success: false, error: errMsg },
+      { success: false, error: errMsg, detail },
       { status: 500 }
     );
   }

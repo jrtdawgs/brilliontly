@@ -8,8 +8,8 @@
 | **Status**     | Living Document                            |
 | **Created**    | 2026-03-10                                 |
 | **Platform**   | Brilliontly                                |
-| **Repository** | github.com/jrtdawgs/brillontly             |
-| **Production** | brillontly-app.vercel.app                  |
+| **Repository** | github.com/jrtdawgs/brilliontly             |
+| **Production** | brilliontly.vercel.app                  |
 
 ---
 
@@ -65,7 +65,7 @@ Brilliontly is a personal finance and investing intelligence platform built by J
 Brilliontly uses the Next.js App Router pattern. All pages are server-rendered or client-rendered React components under the `app/` directory. API routes live under `app/api/` and serve as the backend layer.
 
 ```
-brillontly-app/
+brilliontly-app/
 ├── app/
 │   ├── page.tsx                    # Landing page
 │   ├── login/page.tsx              # Login
@@ -410,8 +410,8 @@ Accepts a CSV file upload. Parses and returns a preview of detected holdings. Do
 | Attribute          | Value                                    |
 |--------------------|------------------------------------------|
 | Hosting            | Vercel                                   |
-| Production URL     | brillontly-app.vercel.app                |
-| Repository         | github.com/jrtdawgs/brillontly           |
+| Production URL     | brilliontly.vercel.app                |
+| Repository         | github.com/jrtdawgs/brilliontly           |
 | Branch             | master                                   |
 | Deploy Trigger     | Auto-deploy on push to master            |
 | Database           | SQLite (better-sqlite3), local file      |
