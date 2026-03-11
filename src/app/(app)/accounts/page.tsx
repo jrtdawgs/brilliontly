@@ -23,10 +23,15 @@ const BROKERAGE_DEFAULTS: Record<string, { accountType: string; name: string; fe
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<{ id: string; accountType: string; name: string; holdings: Holding[] }[]>([]);
   const [showImport, setShowImport] = useState(false);
+  const [showManual, setShowManual] = useState(false);
   const [importPreview, setImportPreview] = useState<Holding[] | null>(null);
   const [importBrokerage, setImportBrokerage] = useState('');
   const [selectedAccountType, setSelectedAccountType] = useState('');
   const [selectedAccountName, setSelectedAccountName] = useState('');
+  const [manualType, setManualType] = useState('401k');
+  const [manualName, setManualName] = useState('My 401(k)');
+  const [manualBalance, setManualBalance] = useState('');
+  const [manualTicker, setManualTicker] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -117,6 +122,36 @@ export default function AccountsPage() {
     }
   };
 
+  const handleManualSave = async () => {
+    const balance = parseFloat(manualBalance.replace(/[$,]/g, ''));
+    if (!balance || balance <= 0) { setError('Enter a valid balance.'); return; }
+
+    const ticker = manualTicker.trim().toUpperCase() || 'CASH';
+    try {
+      const res = await fetch('/api/v1/accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          accountType: manualType,
+          name: manualName,
+          holdings: [{ ticker, name: manualName, shares: 1, costBasis: balance, targetAllocation: 100, assetType: 'fund' }],
+        }),
+      });
+      const data = await res.json();
+      if (data.success) {
+        setSuccess('Account saved and encrypted.');
+        setShowManual(false);
+        setManualBalance('');
+        setManualTicker('');
+        fetchAccounts();
+      } else {
+        setError(data.error);
+      }
+    } catch {
+      setError('Failed to save account.');
+    }
+  };
+
   const feedsLabel = BROKERAGE_DEFAULTS[importBrokerage]?.feeds || 'Long-Term Investing';
 
   return (
@@ -136,7 +171,13 @@ export default function AccountsPage() {
             <span className="ml-1.5 text-[10px] bg-amber-500/15 text-amber-400 px-1.5 py-0.5 rounded">Soon</span>
           </button>
           <button
-            onClick={() => setShowImport(!showImport)}
+            onClick={() => { setShowManual(!showManual); setShowImport(false); setError(''); }}
+            className="bg-[#1e293b] hover:bg-[#334155] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-[#334155]"
+          >
+            Enter Balance
+          </button>
+          <button
+            onClick={() => { setShowImport(!showImport); setShowManual(false); setError(''); }}
             className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
             Import CSV
@@ -160,6 +201,69 @@ export default function AccountsPage() {
       )}
       {success && (
         <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 text-sm text-green-400">{success}</div>
+      )}
+
+      {/* Manual Balance Entry */}
+      {showManual && (
+        <div className="bg-[#111827] border border-[#1e293b] rounded-xl p-6 fade-in">
+          <h3 className="text-lg font-semibold text-white mb-1">Enter Account Balance</h3>
+          <p className="text-sm text-gray-400 mb-5">For 401(k) and Roth IRA accounts where you only have a total balance — no CSV needed.</p>
+          <div className="space-y-4 max-w-md">
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">Account Type</label>
+              <select
+                value={manualType}
+                onChange={(e) => {
+                  setManualType(e.target.value);
+                  const names: Record<string, string> = { '401k': 'My 401(k)', roth_ira: 'My Roth IRA', hsa: 'My HSA', taxable: 'My Brokerage' };
+                  setManualName(names[e.target.value] || 'My Account');
+                }}
+                className="w-full bg-[#1e293b] border border-[#334155] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-green-500"
+              >
+                <option value="401k">401(k)</option>
+                <option value="roth_ira">Roth IRA</option>
+                <option value="hsa">HSA</option>
+                <option value="taxable">Taxable Brokerage</option>
+              </select>
+            </div>
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">Account Name</label>
+              <input
+                type="text"
+                value={manualName}
+                onChange={(e) => setManualName(e.target.value)}
+                placeholder="e.g. Fidelity 401(k)"
+                className="w-full bg-[#1e293b] border border-[#334155] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-green-500"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">Total Balance</label>
+              <input
+                type="text"
+                value={manualBalance}
+                onChange={(e) => setManualBalance(e.target.value)}
+                placeholder="e.g. 47250"
+                className="w-full bg-[#1e293b] border border-[#334155] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-green-500"
+              />
+            </div>
+            <div>
+              <label className="text-xs text-gray-400 mb-1 block">Primary Fund Ticker <span className="text-gray-600">(optional — e.g. FXAIX, VTSAX)</span></label>
+              <input
+                type="text"
+                value={manualTicker}
+                onChange={(e) => setManualTicker(e.target.value)}
+                placeholder="Leave blank for CASH"
+                className="w-full bg-[#1e293b] border border-[#334155] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-green-500 font-mono"
+              />
+            </div>
+            <button
+              onClick={handleManualSave}
+              className="bg-green-600 hover:bg-green-500 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
+            >
+              Save & Encrypt
+            </button>
+          </div>
+        </div>
       )}
 
       {/* CSV Import */}
@@ -347,7 +451,7 @@ export default function AccountsPage() {
       ) : (
         <div className="bg-[#111827] border border-[#1e293b] rounded-xl p-12 text-center">
           <p className="text-gray-400 mb-4">No accounts yet. Import a CSV from your brokerage to get started.</p>
-          <div className="flex items-center justify-center gap-3">
+          <div className="flex items-center justify-center gap-3 flex-wrap">
             <button
               disabled
               className="bg-[#1e293b] text-gray-500 px-6 py-2.5 rounded-xl font-medium cursor-not-allowed border border-[#334155]"
@@ -355,7 +459,13 @@ export default function AccountsPage() {
               Connect Brokerage <span className="ml-1 text-[10px] bg-amber-500/15 text-amber-400 px-1.5 py-0.5 rounded">Soon</span>
             </button>
             <button
-              onClick={() => setShowImport(true)}
+              onClick={() => { setShowManual(true); setShowImport(false); }}
+              className="bg-[#1e293b] hover:bg-[#334155] text-white px-6 py-2.5 rounded-xl font-medium transition-colors border border-[#334155]"
+            >
+              Enter Balance
+            </button>
+            <button
+              onClick={() => { setShowImport(true); setShowManual(false); }}
               className="bg-green-600 hover:bg-green-500 text-white px-6 py-2.5 rounded-xl font-medium transition-colors"
             >
               Import CSV
