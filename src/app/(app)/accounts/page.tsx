@@ -11,27 +11,33 @@ interface Holding {
   assetType: string;
 }
 
-// Map brokerage to default account type and which sections it feeds
-const BROKERAGE_DEFAULTS: Record<string, { accountType: string; name: string; feeds: string }> = {
-  fidelity: { accountType: '401k', name: 'Fidelity 401(k)', feeds: 'Retirement' },
-  schwab: { accountType: 'taxable', name: 'Schwab Brokerage', feeds: 'Long-Term Investing, Day Trading' },
-  robinhood: { accountType: 'taxable', name: 'Robinhood', feeds: 'Long-Term Investing, Day Trading' },
-  vanguard: { accountType: 'roth_ira', name: 'Vanguard Roth IRA', feeds: 'Retirement' },
-  generic: { accountType: 'taxable', name: 'Imported Account', feeds: 'Long-Term Investing' },
+interface AccountGroup {
+  accountType: string;
+  accountName: string;
+  holdings: Holding[];
+}
+
+const ACCOUNT_TYPE_OPTIONS = [
+  { value: '401k', label: '401(k) → Retirement' },
+  { value: 'roth_ira', label: 'Roth IRA → Retirement' },
+  { value: 'traditional_ira', label: 'Traditional IRA → Retirement' },
+  { value: 'hsa', label: 'HSA → Retirement' },
+  { value: 'taxable', label: 'Taxable Brokerage → Investing & Day Trading' },
+];
+
+const FEEDS_LABEL: Record<string, string> = {
+  '401k': 'Retirement',
+  roth_ira: 'Retirement',
+  traditional_ira: 'Retirement',
+  hsa: 'Retirement',
+  taxable: 'Investing & Day Trading',
 };
 
 export default function AccountsPage() {
   const [accounts, setAccounts] = useState<{ id: string; accountType: string; name: string; holdings: Holding[] }[]>([]);
   const [showImport, setShowImport] = useState(false);
-  const [showManual, setShowManual] = useState(false);
-  const [importPreview, setImportPreview] = useState<Holding[] | null>(null);
   const [importBrokerage, setImportBrokerage] = useState('');
-  const [selectedAccountType, setSelectedAccountType] = useState('');
-  const [selectedAccountName, setSelectedAccountName] = useState('');
-  const [manualType, setManualType] = useState('401k');
-  const [manualName, setManualName] = useState('My 401(k)');
-  const [manualBalance, setManualBalance] = useState('');
-  const [manualTicker, setManualTicker] = useState('');
+  const [importedAccounts, setImportedAccounts] = useState<AccountGroup[]>([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -64,11 +70,8 @@ export default function AccountsPage() {
       const data = await res.json();
 
       if (data.success) {
-        setImportPreview(data.data.holdings);
+        setImportedAccounts(data.data.accounts);
         setImportBrokerage(data.data.brokerage);
-        const defaults = BROKERAGE_DEFAULTS[data.data.brokerage] || BROKERAGE_DEFAULTS.generic;
-        setSelectedAccountType(defaults.accountType);
-        setSelectedAccountName(defaults.name);
       } else {
         setError(data.errors?.join(', ') || 'Failed to parse CSV');
       }
@@ -79,80 +82,49 @@ export default function AccountsPage() {
     if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
-  const handleImportSave = async () => {
-    if (!importPreview) return;
-
-    try {
-      const res = await fetch('/api/v1/accounts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          accountType: selectedAccountType,
-          name: selectedAccountName,
-          holdings: importPreview,
-        }),
-      });
-      const data = await res.json();
-
-      if (data.success) {
-        setSuccess('Account imported and encrypted successfully.');
-        setImportPreview(null);
-        setShowImport(false);
-        fetchAccounts();
-      } else {
-        setError(data.error);
+  const handleSaveAll = async () => {
+    setError('');
+    let saved = 0;
+    for (const acct of importedAccounts) {
+      try {
+        const res = await fetch('/api/v1/accounts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            accountType: acct.accountType,
+            name: acct.accountName,
+            holdings: acct.holdings,
+          }),
+        });
+        const data = await res.json();
+        if (data.success) saved++;
+        else setError((prev) => prev + ` ${acct.accountName}: ${data.error}`);
+      } catch {
+        setError((prev) => prev + ` Failed to save ${acct.accountName}.`);
       }
-    } catch {
-      setError('Failed to save imported data.');
+    }
+    if (saved > 0) {
+      setSuccess(`${saved} account${saved > 1 ? 's' : ''} imported and encrypted.`);
+      setImportedAccounts([]);
+      setShowImport(false);
+      fetchAccounts();
     }
   };
 
   const handleDeleteAll = async () => {
     if (!confirm('Are you sure you want to delete ALL your account data? This cannot be undone.')) return;
-
     try {
       const res = await fetch('/api/v1/accounts', { method: 'DELETE' });
       const data = await res.json();
-      if (data.success) {
-        setSuccess(data.message);
-        setAccounts([]);
-      }
+      if (data.success) { setSuccess(data.message); setAccounts([]); }
     } catch {
       setError('Failed to delete accounts.');
     }
   };
 
-  const handleManualSave = async () => {
-    const balance = parseFloat(manualBalance.replace(/[$,]/g, ''));
-    if (!balance || balance <= 0) { setError('Enter a valid balance.'); return; }
-
-    const ticker = manualTicker.trim().toUpperCase() || 'CASH';
-    try {
-      const res = await fetch('/api/v1/accounts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          accountType: manualType,
-          name: manualName,
-          holdings: [{ ticker, name: manualName, shares: 1, costBasis: balance, targetAllocation: 100, assetType: 'fund' }],
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        setSuccess('Account saved and encrypted.');
-        setShowManual(false);
-        setManualBalance('');
-        setManualTicker('');
-        fetchAccounts();
-      } else {
-        setError(data.error);
-      }
-    } catch {
-      setError('Failed to save account.');
-    }
+  const updateImportedAccount = (idx: number, field: 'accountType' | 'accountName', value: string) => {
+    setImportedAccounts((prev) => prev.map((a, i) => i === idx ? { ...a, [field]: value } : a));
   };
-
-  const feedsLabel = BROKERAGE_DEFAULTS[importBrokerage]?.feeds || 'Long-Term Investing';
 
   return (
     <div className="space-y-8 fade-in">
@@ -171,13 +143,7 @@ export default function AccountsPage() {
             <span className="ml-1.5 text-[10px] bg-amber-500/15 text-amber-400 px-1.5 py-0.5 rounded">Soon</span>
           </button>
           <button
-            onClick={() => { setShowManual(!showManual); setShowImport(false); setError(''); }}
-            className="bg-[#1e293b] hover:bg-[#334155] text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors border border-[#334155]"
-          >
-            Enter Balance
-          </button>
-          <button
-            onClick={() => { setShowImport(!showImport); setShowManual(false); setError(''); }}
+            onClick={() => { setShowImport(!showImport); setImportedAccounts([]); setError(''); }}
             className="bg-green-600 hover:bg-green-500 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors"
           >
             Import CSV
@@ -203,69 +169,6 @@ export default function AccountsPage() {
         <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-3 text-sm text-green-400">{success}</div>
       )}
 
-      {/* Manual Balance Entry */}
-      {showManual && (
-        <div className="bg-[#111827] border border-[#1e293b] rounded-xl p-6 fade-in">
-          <h3 className="text-lg font-semibold text-white mb-1">Enter Account Balance</h3>
-          <p className="text-sm text-gray-400 mb-5">For 401(k) and Roth IRA accounts where you only have a total balance — no CSV needed.</p>
-          <div className="space-y-4 max-w-md">
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">Account Type</label>
-              <select
-                value={manualType}
-                onChange={(e) => {
-                  setManualType(e.target.value);
-                  const names: Record<string, string> = { '401k': 'My 401(k)', roth_ira: 'My Roth IRA', hsa: 'My HSA', taxable: 'My Brokerage' };
-                  setManualName(names[e.target.value] || 'My Account');
-                }}
-                className="w-full bg-[#1e293b] border border-[#334155] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-green-500"
-              >
-                <option value="401k">401(k)</option>
-                <option value="roth_ira">Roth IRA</option>
-                <option value="hsa">HSA</option>
-                <option value="taxable">Taxable Brokerage</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">Account Name</label>
-              <input
-                type="text"
-                value={manualName}
-                onChange={(e) => setManualName(e.target.value)}
-                placeholder="e.g. Fidelity 401(k)"
-                className="w-full bg-[#1e293b] border border-[#334155] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-green-500"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">Total Balance</label>
-              <input
-                type="text"
-                value={manualBalance}
-                onChange={(e) => setManualBalance(e.target.value)}
-                placeholder="e.g. 47250"
-                className="w-full bg-[#1e293b] border border-[#334155] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-green-500"
-              />
-            </div>
-            <div>
-              <label className="text-xs text-gray-400 mb-1 block">Primary Fund Ticker <span className="text-gray-600">(optional — e.g. FXAIX, VTSAX)</span></label>
-              <input
-                type="text"
-                value={manualTicker}
-                onChange={(e) => setManualTicker(e.target.value)}
-                placeholder="Leave blank for CASH"
-                className="w-full bg-[#1e293b] border border-[#334155] rounded-lg px-3 py-2 text-white text-sm focus:outline-none focus:border-green-500 font-mono"
-              />
-            </div>
-            <button
-              onClick={handleManualSave}
-              className="bg-green-600 hover:bg-green-500 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
-            >
-              Save & Encrypt
-            </button>
-          </div>
-        </div>
-      )}
-
       {/* CSV Import */}
       {showImport && (
         <div className="bg-[#111827] border border-[#1e293b] rounded-xl p-6 fade-in">
@@ -283,7 +186,7 @@ export default function AccountsPage() {
                   <li>Click <span className="text-white">Download</span> (top right)</li>
                   <li>Select <span className="text-white">CSV</span> format</li>
                 </ol>
-                <p className="text-[10px] text-gray-500 mt-2">Feeds: Retirement (balances only)</p>
+                <p className="text-[10px] text-gray-500 mt-2">Account types auto-detected from CSV</p>
               </div>
               <div className="bg-[#0d1117] border border-[#1e293b] rounded-lg p-4">
                 <p className="text-sm text-green-400 font-semibold mb-2">Robinhood (Taxable)</p>
@@ -293,7 +196,6 @@ export default function AccountsPage() {
                   <li>Click <span className="text-white">Download Account Statement</span></li>
                   <li>Select CSV / spreadsheet format</li>
                 </ol>
-                <p className="text-[10px] text-gray-500 mt-2">Feeds: Long-Term Investing, Day Trading</p>
               </div>
               <div className="bg-[#0d1117] border border-[#1e293b] rounded-lg p-4">
                 <p className="text-sm text-purple-400 font-semibold mb-2">Schwab (Taxable / IRA)</p>
@@ -303,7 +205,6 @@ export default function AccountsPage() {
                   <li>Click <span className="text-white">Export</span></li>
                   <li>Choose <span className="text-white">CSV</span></li>
                 </ol>
-                <p className="text-[10px] text-gray-500 mt-2">Feeds: Long-Term Investing, Day Trading</p>
               </div>
               <div className="bg-[#0d1117] border border-[#1e293b] rounded-lg p-4">
                 <p className="text-sm text-cyan-400 font-semibold mb-2">Vanguard (Roth IRA / 401k)</p>
@@ -313,7 +214,6 @@ export default function AccountsPage() {
                   <li>Click <span className="text-white">Download to spreadsheet</span></li>
                   <li>Save the CSV file</li>
                 </ol>
-                <p className="text-[10px] text-gray-500 mt-2">Feeds: Retirement (balances only)</p>
               </div>
             </div>
           </div>
@@ -326,75 +226,68 @@ export default function AccountsPage() {
             className="block w-full text-sm text-gray-400 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-green-600 file:text-white hover:file:bg-green-500 file:cursor-pointer"
           />
 
-          {importPreview && (
-            <div className="mt-6 space-y-4">
-              <div className="flex items-center gap-3 flex-wrap">
-                <p className="text-sm text-gray-300">
-                  Detected: <span className="text-green-400 font-medium capitalize">{importBrokerage}</span>
-                  {' | '}{importPreview.length} holdings
-                  {' | '}Feeds: <span className="text-cyan-400">{feedsLabel}</span>
-                </p>
+          {importedAccounts.length > 0 && (
+            <div className="mt-6 space-y-6">
+              <div className="flex items-center gap-2">
+                <span className="text-sm text-gray-300 font-medium">
+                  Detected <span className="text-green-400 capitalize">{importBrokerage}</span> — {importedAccounts.length} account{importedAccounts.length > 1 ? 's' : ''} found
+                </span>
+                <span className="text-xs text-gray-500">Adjust type or name if incorrect</span>
               </div>
 
-              {/* Account type selector */}
-              <div className="flex items-center gap-3">
-                <label className="text-sm text-gray-400">Save as:</label>
-                <select
-                  value={selectedAccountType}
-                  onChange={(e) => {
-                    setSelectedAccountType(e.target.value);
-                    const typeNames: Record<string, string> = {
-                      '401k': `${importBrokerage === 'generic' ? 'Imported' : importBrokerage.charAt(0).toUpperCase() + importBrokerage.slice(1)} 401(k)`,
-                      'roth_ira': `${importBrokerage === 'generic' ? 'Imported' : importBrokerage.charAt(0).toUpperCase() + importBrokerage.slice(1)} Roth IRA`,
-                      'taxable': `${importBrokerage === 'generic' ? 'Imported' : importBrokerage.charAt(0).toUpperCase() + importBrokerage.slice(1)} Brokerage`,
-                      'hsa': `${importBrokerage === 'generic' ? 'Imported' : importBrokerage.charAt(0).toUpperCase() + importBrokerage.slice(1)} HSA`,
-                    };
-                    setSelectedAccountName(typeNames[e.target.value] || 'Imported Account');
-                  }}
-                  className="bg-[#1e293b] border border-[#334155] rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-green-500"
-                >
-                  <option value="401k">401(k) → Retirement</option>
-                  <option value="roth_ira">Roth IRA → Retirement</option>
-                  <option value="taxable">Taxable Brokerage → Investing & Day Trading</option>
-                  <option value="hsa">HSA → Retirement</option>
-                </select>
-                <input
-                  type="text"
-                  value={selectedAccountName}
-                  onChange={(e) => setSelectedAccountName(e.target.value)}
-                  className="bg-[#1e293b] border border-[#334155] rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-green-500 flex-1"
-                  placeholder="Account name"
-                />
-              </div>
+              {importedAccounts.map((acct, idx) => (
+                <div key={idx} className="bg-[#0d1117] border border-[#334155] rounded-xl p-4 space-y-3">
+                  {/* Account type + name editor */}
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <select
+                      value={acct.accountType}
+                      onChange={(e) => updateImportedAccount(idx, 'accountType', e.target.value)}
+                      className="bg-[#1e293b] border border-[#334155] rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-green-500"
+                    >
+                      {ACCOUNT_TYPE_OPTIONS.map((o) => (
+                        <option key={o.value} value={o.value}>{o.label}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="text"
+                      value={acct.accountName}
+                      onChange={(e) => updateImportedAccount(idx, 'accountName', e.target.value)}
+                      className="bg-[#1e293b] border border-[#334155] rounded-lg px-3 py-1.5 text-white text-sm focus:outline-none focus:border-green-500 flex-1 min-w-[160px]"
+                    />
+                    <span className="text-xs text-cyan-400">→ {FEEDS_LABEL[acct.accountType] || 'Investing'}</span>
+                  </div>
 
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b border-[#1e293b]">
-                      <th className="text-left text-gray-500 py-2 px-2">Ticker</th>
-                      <th className="text-left text-gray-500 py-2 px-2">Name</th>
-                      <th className="text-right text-gray-500 py-2 px-2">Shares</th>
-                      <th className="text-right text-gray-500 py-2 px-2">Cost Basis</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {importPreview.map((h, i) => (
-                      <tr key={i} className="border-b border-[#1e293b]/50">
-                        <td className="py-2 px-2 text-white font-mono">{h.ticker}</td>
-                        <td className="py-2 px-2 text-gray-300">{h.name}</td>
-                        <td className="text-right py-2 px-2 text-white">{h.shares}</td>
-                        <td className="text-right py-2 px-2 text-gray-400">${h.costBasis.toFixed(2)}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                  {/* Holdings table */}
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-[#1e293b]">
+                          <th className="text-left text-gray-500 py-1.5 px-2">Ticker</th>
+                          <th className="text-left text-gray-500 py-1.5 px-2">Name</th>
+                          <th className="text-right text-gray-500 py-1.5 px-2">Shares</th>
+                          <th className="text-right text-gray-500 py-1.5 px-2">Price</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {acct.holdings.map((h, i) => (
+                          <tr key={i} className="border-b border-[#1e293b]/40">
+                            <td className="py-1.5 px-2 text-white font-mono">{h.ticker}</td>
+                            <td className="py-1.5 px-2 text-gray-300 text-xs">{h.name}</td>
+                            <td className="text-right py-1.5 px-2 text-white">{h.shares}</td>
+                            <td className="text-right py-1.5 px-2 text-gray-400">${h.costBasis.toFixed(2)}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              ))}
 
               <button
-                onClick={handleImportSave}
+                onClick={handleSaveAll}
                 className="bg-green-600 hover:bg-green-500 text-white px-6 py-2.5 rounded-lg text-sm font-medium transition-colors"
               >
-                Save & Encrypt
+                Save & Encrypt All Accounts
               </button>
             </div>
           )}
@@ -413,15 +306,17 @@ export default function AccountsPage() {
                     acct.accountType === '401k' ? 'bg-blue-500/15 text-blue-400' :
                     acct.accountType === 'roth_ira' ? 'bg-purple-500/15 text-purple-400' :
                     acct.accountType === 'hsa' ? 'bg-cyan-500/15 text-cyan-400' :
+                    acct.accountType === 'traditional_ira' ? 'bg-indigo-500/15 text-indigo-400' :
                     'bg-amber-500/15 text-amber-400'
                   }`}>
                     {acct.accountType === '401k' ? '401(k)' :
                      acct.accountType === 'roth_ira' ? 'Roth IRA' :
+                     acct.accountType === 'traditional_ira' ? 'Traditional IRA' :
                      acct.accountType === 'hsa' ? 'HSA' :
                      acct.accountType === 'taxable' ? 'Taxable' : acct.accountType}
                   </span>
                   <span className="text-[10px] text-gray-600">
-                    {['401k', 'roth_ira', 'hsa'].includes(acct.accountType) ? '→ Retirement' : '→ Investing & Day Trading'}
+                    {['401k', 'roth_ira', 'hsa', 'traditional_ira'].includes(acct.accountType) ? '→ Retirement' : '→ Investing & Day Trading'}
                   </span>
                 </div>
                 <div className="flex items-center gap-1 text-xs text-green-400">
@@ -451,7 +346,7 @@ export default function AccountsPage() {
       ) : (
         <div className="bg-[#111827] border border-[#1e293b] rounded-xl p-12 text-center">
           <p className="text-gray-400 mb-4">No accounts yet. Import a CSV from your brokerage to get started.</p>
-          <div className="flex items-center justify-center gap-3 flex-wrap">
+          <div className="flex items-center justify-center gap-3">
             <button
               disabled
               className="bg-[#1e293b] text-gray-500 px-6 py-2.5 rounded-xl font-medium cursor-not-allowed border border-[#334155]"
@@ -459,13 +354,7 @@ export default function AccountsPage() {
               Connect Brokerage <span className="ml-1 text-[10px] bg-amber-500/15 text-amber-400 px-1.5 py-0.5 rounded">Soon</span>
             </button>
             <button
-              onClick={() => { setShowManual(true); setShowImport(false); }}
-              className="bg-[#1e293b] hover:bg-[#334155] text-white px-6 py-2.5 rounded-xl font-medium transition-colors border border-[#334155]"
-            >
-              Enter Balance
-            </button>
-            <button
-              onClick={() => { setShowImport(true); setShowManual(false); }}
+              onClick={() => setShowImport(true)}
               className="bg-green-600 hover:bg-green-500 text-white px-6 py-2.5 rounded-xl font-medium transition-colors"
             >
               Import CSV

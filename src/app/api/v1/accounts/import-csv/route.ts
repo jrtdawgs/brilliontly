@@ -19,8 +19,7 @@ export async function POST(request: Request) {
       success: result.success,
       data: {
         brokerage: result.brokerage,
-        holdings: result.holdings,
-        holdingsCount: result.holdings.length,
+        accounts: result.accounts,
       },
       errors: result.errors,
     });
