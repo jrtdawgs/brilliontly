@@ -21,15 +21,15 @@ export default function LandingPage() {
       </nav>
 
       {/* Hero */}
-      <section className="max-w-6xl mx-auto px-6 pt-6 pb-12 text-center">
+      <section className="max-w-6xl mx-auto px-6 pt-3 pb-8 text-center">
         {/* Logo */}
-        <div className="mb-6 flex flex-col items-center">
-          <BrilliontlyLogo size={100} />
-          <h1 className="text-4xl lg:text-5xl font-bold bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent mt-4">
+        <div className="mb-3 flex flex-col items-center">
+          <BrilliontlyLogo size={72} />
+          <h1 className="text-3xl lg:text-4xl font-bold bg-gradient-to-r from-green-400 to-cyan-400 bg-clip-text text-transparent mt-2">
             Brilliontly
           </h1>
         </div>
-        <p className="text-xl lg:text-2xl text-gray-300 max-w-2xl mx-auto mb-8 leading-relaxed">
+        <p className="text-lg lg:text-xl text-gray-300 max-w-2xl mx-auto mb-6 leading-relaxed">
           Brilliantly make millions with Brilliontly.{' '}
           <span className="text-gray-400">
             RSI signals. Capitulation detection. VIX tracking. Drawdown analysis.
