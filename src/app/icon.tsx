@@ -11,7 +11,7 @@ export default function Icon() {
           width: 48,
           height: 48,
           borderRadius: 12,
-          background: 'linear-gradient(135deg, rgba(74,222,128,0.15) 0%, rgba(34,211,238,0.15) 100%)',
+          background: '#0a0f1a',
           border: '2px solid #4ade80',
           display: 'flex',
           alignItems: 'center',
@@ -20,13 +20,9 @@ export default function Icon() {
       >
         <div
           style={{
-            fontSize: 28,
+            fontSize: 30,
             fontWeight: 900,
-            background: 'linear-gradient(135deg, #4ade80 0%, #22d3ee 100%)',
-            backgroundClip: 'text',
-            color: 'transparent',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
+            color: '#4ade80',
             lineHeight: 1,
           }}
         >

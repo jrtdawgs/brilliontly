@@ -1,36 +1,38 @@
 import { NextResponse } from 'next/server';
 import { getMultipleQuotes, getHistoricalData, type QuoteData } from '@/lib/market/yahoo';
+import { getFinnhubQuotes, getFinnhubHistory } from '@/lib/market/finnhub';
 import { calculateRSI, rsiSignal, currentDrawdown, drawdownSignal, overallSignal } from '@/lib/analytics/signals';
 import { TRACKED_ASSETS } from '@/lib/analytics/signals';
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
-// Macro tickers for VIX, Dollar, Yields, Bonds
+// Macro tickers — kept on Yahoo Finance (indices not on Finnhub free tier)
 const MACRO_TICKERS = ['^VIX', 'DX-Y.NYB', '^TNX', '^FVX', '^TYX', '^IRX', 'TLT', 'UUP', 'GLD'];
 
 const NO_CACHE = { 'Cache-Control': 'no-store, no-cache, must-revalidate', 'Pragma': 'no-cache' };
 
+const useFinnhub = () => !!process.env.FINNHUB_API_KEY;
+
 export async function GET(request: Request) {
   const { searchParams } = new URL(request.url);
-  const type = searchParams.get('type') || 'all'; // all, signals, macro, quotes
+  const type = searchParams.get('type') || 'all';
 
   try {
-    if (type === 'macro') {
-      return await getMacroData();
-    }
+    if (type === 'macro') return await getMacroData();
 
     if (type === 'quotes') {
       const tickersParam = searchParams.get('tickers');
       const tickers = tickersParam ? tickersParam.split(',') : TRACKED_ASSETS.map(a => a.ticker);
-      const quotes = await getMultipleQuotes(tickers);
+      const quotes = useFinnhub()
+        ? await getFinnhubQuotes(tickers)
+        : await getMultipleQuotes(tickers);
       return NextResponse.json(
         { success: true, data: Object.fromEntries(quotes), lastUpdated: new Date().toISOString() },
         { headers: NO_CACHE }
       );
     }
 
-    // type === 'all' or 'signals' - get quotes + compute signals
     return await getSignalData();
   } catch (error) {
     console.error('Live market data error:', error);
@@ -42,6 +44,7 @@ export async function GET(request: Request) {
 }
 
 async function getMacroData() {
+  // Macro always uses Yahoo Finance (VIX, yield indices not on Finnhub free tier)
   const quotes = await getMultipleQuotes(MACRO_TICKERS);
 
   const vixQuote = quotes.get('^VIX');
@@ -57,7 +60,6 @@ async function getMacroData() {
     success: true,
     data: {
       vix: vixQuote ? { price: vixQuote.price, change: vixQuote.change, changePercent: vixQuote.changePercent } : null,
-
       dollarIndex: dollarQuote ? { price: dollarQuote.price, change: dollarQuote.change, changePercent: dollarQuote.changePercent } : null,
       tenYearYield: tenYearQuote ? { price: tenYearQuote.price, change: tenYearQuote.change } : null,
       fiveYearYield: fiveYearQuote ? { price: fiveYearQuote.price, change: fiveYearQuote.change } : null,
@@ -71,11 +73,13 @@ async function getMacroData() {
 }
 
 async function getSignalData() {
-  // Get all quotes first
   const allTickers = TRACKED_ASSETS.map(a => a.ticker);
-  const quotes = await getMultipleQuotes(allTickers);
 
-  // For each ticker with a quote, compute RSI and signals from 3-month history
+  // Use Finnhub if API key is set, otherwise fall back to Yahoo Finance
+  const quotes: Map<string, QuoteData> = useFinnhub()
+    ? await getFinnhubQuotes(allTickers)
+    : await getMultipleQuotes(allTickers);
+
   const signalResults: Record<string, {
     quote: QuoteData;
     rsi: number;
@@ -87,7 +91,6 @@ async function getSignalData() {
     category: string;
   }> = {};
 
-  // Fetch historical data in parallel batches for signal computation
   const historyPromises = allTickers.map(async (ticker) => {
     const quote = quotes.get(ticker);
     if (!quote) return;
@@ -96,26 +99,22 @@ async function getSignalData() {
     if (!asset) return;
 
     try {
-      const history = await getHistoricalData(ticker, '3mo', '1d');
+      const history = useFinnhub()
+        ? await getFinnhubHistory(ticker, 90)
+        : await getHistoricalData(ticker, '3mo', '1d');
+
       if (history.length < 15) return;
 
       const closePrices = history.map(h => h.close);
       const volumes = history.map(h => h.volume);
 
-      // Calculate RSI
       const rsi = calculateRSI(closePrices);
       const rsiSig = rsiSignal(rsi);
-
-      // Calculate drawdown from high
       const dd = currentDrawdown(closePrices);
       const ddSig = drawdownSignal(dd, asset.name);
-
-      // Calculate volume ratio
       const avgVol = volumes.slice(0, -1).reduce((s, v) => s + v, 0) / Math.max(volumes.length - 1, 1);
       const currentVol = volumes[volumes.length - 1] || 0;
       const volRatio = avgVol > 0 ? currentVol / avgVol : 1;
-
-      // Overall signal
       const overall = overallSignal([rsiSig, ddSig]);
 
       signalResults[ticker] = {
@@ -129,7 +128,7 @@ async function getSignalData() {
         category: asset.category,
       };
     } catch {
-      // Skip this ticker if history fetch fails
+      // Skip ticker if history fetch fails
     }
   });
 
@@ -140,5 +139,6 @@ async function getSignalData() {
     data: signalResults,
     tickerCount: Object.keys(signalResults).length,
     lastUpdated: new Date().toISOString(),
+    source: useFinnhub() ? 'finnhub' : 'yahoo',
   }, { headers: NO_CACHE });
 }
